@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venta de Reductos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        #carrito-icon-container {
+            position: relative;
+            display: inline-block;
+            color: white;
+        }
+        #carrito-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 12px;
+        }
+        #carrito-flotante {
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            background: white;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            width: 300px;
+            height: auto;
+            display: none;
+        }
+        .producto-carrito {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #ddd;
+            padding: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Venta de Reductos</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="#">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Acerca de</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Productos</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contacto</a>
+                    </li>
+                </ul>
+                <div id="carrito-icon-container" style="cursor: pointer;">
+                    🛒<i class="fas fa-shopping-cart carrito-icono"></i>
+                    <span id="carrito-count">0</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="carrito-flotante">
+        <h4>Carrito</h4>
+        <div id="carrito"></div>
+    </div>
+
+    <div class="container mt-5">
+        <div class="row" id="productos"></div>
+    </div>
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <p class="mb-0">
+                        © 2023 Venta de Reductos. Todos los derechos reservados.
+                    </p>
+                    <p class="mb-0">
+                        Desarrollado por <a href="https://github.com/pedrokey12" class="text-white text-decoration-underline" target="_blank">Tu Nombre</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const productos = [
+            { id: 1, nombre: "Remera manga corta", precio: 100, imagenes: ["remera1.jpg", "remera2.jpg", "remera3.jpg"], colores: ["Blanco", "Negro", "Rojo", "Azul"] },
+            { id: 2, nombre: "Remera manga corta", precio: 200, imagenes: ["remera2.webp", "remera4.jpg", "remera5.jpg"], colores: ["Negro", "Blanco", "estampada", "Azul"] },
+            { id: 3, nombre: "Remera manga corta", precio: 300, imagenes: ["remera6.jpg", "remera1.jpg", "remera2.jpg"], colores: ["Negro", "Blanco", "Estampada", "Azul"] },
+            { id: 4, nombre: "Remera manga corta", precio: 400, imagenes: ["remera3.jpg", "remera4.jpg", "remera5.jpg"], colores: ["Negro", "Blanco", "Estampada", "Azul"] },
+            { id: 5, nombre: "Remera manga corta", precio: 500, imagenes: ["remera6.jpg", "remera1.jpg", "remera2.webp"], colores: ["Negro", "Blanco", "Estampada", "Azul"] }
+        ];
+
+        let carrito = [];
+
+        function renderProductos() {
+            const contenedor = document.getElementById('productos');
+            contenedor.innerHTML = '';
+
+            productos.forEach(producto => {
+                const card = `
+                    <div class="col-md-4 mb-4">
+                        <div class="card">
+                            <div id="carousel${producto.id}" class="carousel slide" data-bs-ride="carousel">
+                                <div class="carousel-inner">
+                                    ${producto.imagenes.map((img, index) => `
+                                        <div class="carousel-item ${index === 0 ? 'active' : ''}">
+                                            <img src="${img}" class="d-block w-100" alt="${producto.nombre}">
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#carousel${producto.id}" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#carousel${producto.id}" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <h5 class="card-title">${producto.nombre}</h5>
+                                <p class="card-text">$${producto.precio}</p>
+                                <select id="color-${producto.id}" class="form-select mb-2">
+                                    ${producto.colores.map(color => `
+                                        <option value="${color}">${color}</option>
+                                    `).join('')}
+                                </select>
+                                <input type="number" id="cantidad-${producto.id}" class="form-control mb-2" value="1" min="1">
+                                <button class="btn btn-primary w-100" onclick="agregarAlCarrito(${producto.id})">Agregar al carrito</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                contenedor.innerHTML += card;
+            });
+        }
+
+        function renderCarrito() {
+            const contenedor = document.getElementById('carrito');
+            contenedor.innerHTML = '';
+
+            if (carrito.length === 0) {
+                contenedor.innerHTML = '<p>No hay productos en el carrito.</p>';
+                return;
+            }
+
+            carrito.forEach((producto, index) => {
+                const item = `
+                    <div class="producto-carrito">
+                        <span>${producto.nombre} - ${producto.color} (x${producto.cantidad}) - $${producto.precio * producto.cantidad}</span>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarDelCarrito(${index})">X</button>
+                    </div>
+                `;
+                contenedor.innerHTML += item;
+            });
+
+            const botonPagarMercadoPago = `
+                <div class="text-center mt-3">
+                    <button class="btn btn-success btn-sm w-100" onclick="pagarConMercadoPago()">Pagar con MercadoPago</button>
+                </div>
+            `;
+            contenedor.innerHTML += botonPagarMercadoPago;
+        }
+
+        window.agregarAlCarrito = function(id) {
+            const producto = productos.find(p => p.id === id);
+            const cantidad = parseInt(document.getElementById(`cantidad-${id}`).value) || 1;
+            const color = document.getElementById(`color-${id}`).value;
+
+            const productoEnCarrito = carrito.find(p => p.id === id && p.color === color);
+
+            if (productoEnCarrito) {
+                productoEnCarrito.cantidad += cantidad;
+            } else {
+                carrito.push({ ...producto, cantidad, color });
+            }
+
+            renderCarrito();
+            actualizarContadorCarrito();
+            Swal.fire({
+                icon: 'success',
+                title: 'Producto agregado',
+                text: `${cantidad} x ${producto.nombre} (${color}) ha sido agregado al carrito.`
+            });
+        }
+
+        window.eliminarDelCarrito = function(index) {
+            carrito.splice(index, 1);
+            renderCarrito();
+            actualizarContadorCarrito();
+            Swal.fire({
+                icon: 'success',
+                title: 'Producto eliminado',
+                text: 'El producto ha sido removido del carrito.'
+            });
+        }
+
+        window.pagarConMercadoPago = function() {
+            if (carrito.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Carrito vacío',
+                    text: 'No hay productos en el carrito.'
+                });
+                return;
+            }
+
+            const mp = new MercadoPago('TU_PUBLIC_KEY', {
+                locale: 'es-AR'
+            });
+
+            fetch('https://api.mercadopago.com/checkout/preferences', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer TU_ACCESS_TOKEN',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    items: carrito.map(producto => ({
+                        title: `${producto.nombre} - ${producto.color}`,
+                        unit_price: producto.precio,
+                        quantity: producto.cantidad,
+                    }))
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                window.location.href = data.init_point;
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        window.pagarEnEfectivo = function() {
+            if (carrito.length === 0) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Carrito vacío',
+                    text: 'No hay productos en el carrito.'
+                });
+                return;
+            }
+
+            Swal.fire({
+                icon: 'info',
+                title: 'Pagar en efectivo',
+                text: 'Por favor, acérquese a nuestra tienda para realizar el pago en efectivo.',
+                confirmButtonText: 'Entendido'
+            });
+        }
+
+        function actualizarContadorCarrito() {
+            const totalProductos = carrito.reduce((total, producto) => total + producto.cantidad, 0);
+            document.getElementById('carrito-count').textContent = totalProductos;
+        }
+
+        // Funcionalidad para mostrar/ocultar el carrito
+        document.getElementById('carrito-icon-container').addEventListener('click', function() {
+            const carritoFlotante = document.getElementById('carrito-flotante');
+            carritoFlotante.style.display = carritoFlotante.style.display === 'block' ? 'none' : 'block';
+        });
+
+        renderProductos();
+        actualizarContadorCarrito();
+    });
+    </script>
+</body>
+</html>
